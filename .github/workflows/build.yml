@@ -1,0 +1,88 @@
+name: Build and Deploy README
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+  schedule:
+    - cron:  '0 0 * * *'
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - uses: actions/cache@v2
+        name: Configure pip caching
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install -r requirements.txt
+
+      - name: Update README
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          python build.py
+          cat README.md
+
+      - name: Check if README.md changed
+        id: readme_changed
+        run: |
+          if git diff --quiet HEAD README.md; then
+            echo "No changes in README.md"
+            echo "::set-output name=isChange::false"
+          else
+            echo "README.md changed"
+            echo "::set-output name=isChange::true"
+          fi
+
+      - name: Commit and push if changed
+        run: |
+          git diff
+          git config --global user.email "chanthinker@foxmail.com"
+          git config --global user.name "testdog-bot"
+          git pull
+          git add -A
+          git commit -m "Updated content from bot" || exit 0
+          git push
+
+      # 不需要vercel 可以把以下内容注释或删除
+      - name: Check if Vercel CLI installed
+        id: vercel_installed
+        run: |
+          if command -v vercel &> /dev/null; then
+            echo "Vercel CLI already installed"
+            echo "::set-output name=installed::true"
+          else
+            echo "Vercel CLI not installed"
+            echo "::set-output name=installed::false"
+          fi
+        shell: bash
+
+      - name: Install Vercel CLI
+        run: |
+          if [[ "${{ steps.vercel_installed.outputs.installed }}" != "true" ]]; then
+            npm install --global vercel@latest
+          fi
+
+      - name: Deploy to Vercel
+        run: |
+          if [[ "${{ steps.readme_changed.outputs.isChange }}" == "true" ]]; then
+            vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+            vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
+          fi

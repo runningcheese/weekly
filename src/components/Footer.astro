@@ -1,0 +1,102 @@
+---
+import { SITE } from '@/config';
+---
+<script type="text/javascript" src="https://gw.alipayobjects.com/os/k/3j/lozad.min.js"></script>
+
+<!-- This is intentionally inlined to avoid FOUC 2-->
+<script is:inline>
+  const doc = document
+  doc.addEventListener('DOMContentLoaded', function () {
+
+    // 图片懒加载
+    const observer = lozad('.lozad', {
+      loaded: function (el) {
+        el.alt = el.getAttribute('data-alt');
+      },
+    });
+    observer.observe();
+
+    // 链接外跳
+    const links = doc.links;
+    for (let i = 0; i < +links.length; i++) {
+      if (links[i].hostname != window.location.hostname ) {
+        links[i].target = '_blank';
+      }
+    }
+
+    // toc高亮
+    if (doc.getElementById('Jtoc')) {
+      const sections = Array.from(doc.querySelectorAll("h2[id]"));
+      const scrollHandler = entries =>
+        entries.forEach(entry => {
+          const section = entry.target;
+          const sectionId = section.id;
+          const sectionLink = doc.querySelector(`.toc-list>li>a[href="#${sectionId}"]`);
+
+          let inScreen = entry.intersectionRatio > 0
+          //  也可以按照entry.boundingClientRect判断
+          if (inScreen) {
+            sectionLink.classList.add("on");
+          } else {
+            sectionLink.classList.remove("on");
+          }
+        });
+
+      const itsObserver = new IntersectionObserver(scrollHandler);
+      sections.forEach(section => itsObserver.observe(section));
+    }
+  });
+</script>
+
+<script >
+  import CONFIG from '../../config.json'
+  const mod = {
+    timePrefix:'t-',
+    expire:1000*60*60,
+    load:function(libName,libUrl){
+      let aval = (new Date).getTime() - localStorage.getItem(this.timePrefix+libName) < this.expire;
+      let libStr = localStorage.getItem(libName)
+      if (aval && libStr) {
+        this.parseAndInsert(libStr)
+        this.genCmt()
+      }else{
+        this.ajax(libUrl,(str)=>{
+          localStorage.setItem(libName, str)
+          localStorage.setItem(this.timePrefix+libName, (new Date).getTime())
+          this.parseAndInsert(str)
+          this.genCmt()
+        })
+      }
+    },
+    parseAndInsert(rawStr) {
+      let script = document.createElement('script')
+      script.innerHTML = rawStr
+      document.body.appendChild(script)
+    },
+    ajax:function(url,cb){
+      let xhr = new XMLHttpRequest;
+      xhr.open('get', url, true)
+      xhr.send();
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+          cb && cb(xhr.responseText)
+        }
+      }
+    },
+    genCmt(){
+      let t = setTimeout(() => {
+        window.Waline && Waline.init({
+          el: '#Jcomment',
+          serverURL: CONFIG.cmtURL,
+        });
+        clearTimeout(t)
+        t = null;
+      }, 100);
+    },
+    cmtSdk:'https://unpkg.com/@waline/client@2.15.5/dist/waline.js',
+  }
+
+  document.getElementById('Jcomment') && CONFIG.cmtURL && mod.load('lib-cmt',mod.cmtSdk);
+</script>
+
+{SITE.pv ?<script async defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>:''}

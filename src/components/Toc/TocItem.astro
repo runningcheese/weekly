@@ -1,0 +1,18 @@
+---
+const { heading } = Astro.props;
+---
+
+<li>
+  <a href={'#' + heading.slug}>
+    {heading.text}
+  </a>
+  {
+    heading.subheadings.length > 0 && (
+      <ul class="toc-sub-list">
+        {heading.subheadings.map((subheading) => (
+          <Astro.self heading={subheading} />
+        ))}
+      </ul>
+    )
+  }
+</li>

@@ -1,0 +1,15 @@
+{
+  "title": "测试狗",
+  "author": "thinkerchan",
+  "description": "测试狗周刊",
+  "keywords": "测试狗,testdog,testdog.cn",
+  "icon": "https://t-qiniu.linkroutes.com/uPic/XgSVmb.jpg",
+  "pic": "",
+  "homePage": "https://post.testdog.cn",
+  "blogPage": "https://post.testdog.cn",
+  "twitterId": "thinkerchan",
+  "githubId": "thinkerchan",
+  "repo": "thinkerchan/weekly",
+  "cmtURL":"https://cmt.testdog.cn",
+  "pv":true
+}

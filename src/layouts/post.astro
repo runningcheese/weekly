@@ -1,0 +1,283 @@
+---
+import '../styles/heti.min.css';
+import HeadCommon from '../components/HeadCommon.astro';
+import HeadSEO from '../components/HeadSEO.astro';
+import Footer from '../components/Footer.astro';
+import AstroLogo from '../components/Header/AstroLogo.astro';
+import LeftSidebar from '../components/LeftSidebar.astro';
+import { SITE } from '@/config';
+import { parseTitle, sortPosts, getIndex } from '@/util';
+
+const { headings } = Astro.props;
+import Toc from '../components/Toc/Toc.astro';
+
+export interface Props {
+  frontmatter: { date: any; pic: any; desc: any; url: any; twitterImg: any };
+  title: string;
+}
+
+const pageUrl = new URL(Astro.request.url);
+const currentPage = pageUrl.pathname;
+
+let title = parseTitle(currentPage);
+
+const { date, pic, desc, url, twitterImg,toc } = Astro.props.frontmatter;
+const content = {
+  title,
+  image: pic,
+  description: desc,
+  twitterImg,
+};
+const currentUrl = SITE.homePage + currentPage;
+
+// 或者下一篇文章
+const posts = await Astro.glob('../pages/posts/*.md');
+const allPosts = sortPosts(posts);
+const postIndex = getIndex(currentPage);
+
+let prevUrl = '';
+let nextUrl = '';
+
+if (allPosts.length) {
+  // 查看较旧的一篇
+  if (postIndex < allPosts.length && postIndex > 0) {
+    prevUrl = allPosts[ allPosts.length - postIndex].url;
+  }else{
+    prevUrl = ''
+  }
+
+  // 查看较新的一篇
+  if (postIndex < allPosts.length - 1) {
+    nextUrl = allPosts[ allPosts.length - postIndex - 2].url;
+  }else{
+    nextUrl = ''
+  }
+}
+---
+
+<html lang="ch">
+  <head>
+    <HeadCommon />
+    <HeadSEO content={content} pageURL={currentUrl} />
+    <meta name="generator" content={Astro.generator} />
+    <title>{SITE.title}{title}</title>
+    <style>
+      body {
+        width: 100%;
+        --gutter: 0.5rem;
+        --doc-padding: 2rem;
+      }
+
+      .layout {
+        display: grid;
+        grid-auto-flow: column;
+        grid-template-columns:
+          minmax(var(--gutter), 1fr) minmax(0, var(--max-width))
+          minmax(var(--gutter), 1fr);
+        overflow-x: hidden;
+      }
+
+      .heti h1.content-title:first-child {
+        margin-block-start: 8px !important;
+        margin-bottom: 16px;
+        letter-spacing: 0.02em;
+      }
+
+      .grid-sidebar {
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        padding: 0;
+        margin-left: -5px;
+      }
+
+      #grid-left {
+        position: fixed;
+        background-color: var(--theme-bg);
+        z-index: 10;
+        display: none;
+      }
+
+      #grid-main {
+        padding: 0.8rem var(--gutter) 4rem var(--gutter);
+        grid-column: 2;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      #grid-right {
+        display: none;
+      }
+
+      @media (min-width: 50em) {
+        .layout {
+          overflow: initial;
+          grid-template-columns: 18rem minmax(0, var(--max-width));
+          gap: 0;
+        }
+
+        #grid-main {
+          padding: 0.8rem 2rem 4rem 2rem;
+        }
+
+        #grid-left {
+          display: flex;
+          padding-left: 2rem;
+          position: sticky;
+          grid-column: 1;
+        }
+      }
+
+      @media (min-width: 72em) {
+        .layout {
+          grid-template-columns: 20rem minmax(0, var(--max-width)) 13rem;
+          padding-left: 0;
+          padding-right: 0;
+          margin: 0 auto;
+        }
+
+        #grid-right {
+          grid-column: 3;
+          display: flex;
+        }
+      }
+
+      .gsc-left-header .color-text-secondary {
+        display: none;
+      }
+
+      .logo {
+        display: none;
+        margin-top: -0.1em;
+      }
+
+      @media (max-width: 50em) {
+        .logo {
+          display: block;
+          color: #fff;
+          margin-top: -0.1em;
+          margin-right: 0.2em;
+        }
+
+        .logo:active {
+          text-decoration: none;
+          border-block-end: none;
+          padding-block-end: none;
+        }
+
+        #grid-main {
+          margin-top: -7px;
+          padding: 0.8rem 0.5rem var(--doc-padding) 0.5rem;
+        }
+
+        .heti h1.content-title:first-child {
+          margin-bottom: 12px;
+          font-size: 1.8rem;
+        }
+      }
+      .post-footer a {
+        color: var(--theme-text-accent);
+      }
+      .post-footer a:hover {
+        border-block-end: none;
+      }
+      .heti .pay-button {
+        color: #fff;
+      }
+      .heti .pay-button:hover {
+        border-block-end: none;
+        padding-block-end: 0px;
+      }
+
+    </style>
+  </head>
+  <body>
+    <main class="layout">
+      <aside id="grid-left" class="grid-sidebar" title="Site Navigation">
+        <LeftSidebar currentPage={currentPage} />
+      </aside>
+      <div id="grid-main">
+        <div
+          class="markdown-body heti md:mx-auto md:pb-20 pb-14 xl:max-w-7xl w-full lg:max-w-5xl md:max-w-2xl md:pl-3.5"
+          id="write"
+        >
+          <h1 class="content-title flex align-middle text-gray-800">
+            <a class="logo inline-block md:hidden visible" href="/"
+              ><AstroLogo size={40} />
+            </a>
+            {title}
+          </h1>
+          <div id="Jslot">
+            <slot/>
+          </div>
+          <!-- <div class="flex align-middle justify-center mt-4">
+            <a
+              class="inline-block h-10 items-center rounded bg-[#262626] px-5 py-3 text-sm font-medium text-white pay-button"
+              href=""
+              target="_blank"
+              rel="noreferrer"></a
+            >
+          </div> -->
+          <hr />
+          <div
+            class="flex justify-between md:flex-row flex-col mt-2 post-footer"
+          >
+            <div class="text-gray-800 flex-1">
+              发布日期：
+              {
+                SITE.repo?
+                <a href={`https://github.com/${SITE.repo}/tree/master/src/pages${url}.md`}
+                target="_blank"
+                title="Edit">{date}</a>
+                : date
+              }
+            </div>
+            <div class="md:mt-0 mt-4 flex-1 text-right">
+              {nextUrl ? <a href={nextUrl}>上一篇 |</a> : null}
+              {prevUrl ? <a href={prevUrl}>下一篇 |</a> : null}
+              <a href="/">去首页 |</a>
+              <a
+                href={`https://twitter.com/${SITE.twitterId}`}
+                target="_blank"
+                title="Follow">Twitter</a
+              >
+              <a
+                href={`https://github.com/${SITE.repo}`}
+                title="Star"
+                target="_blank"
+                class="lg:inline-block hidden"
+              >
+                | Github</a
+              >
+              <a
+                href="/rss.xml"
+                title="Subscribe"
+                target="_blank"
+                class="xl:inline-block hidden"
+              >
+                | RSS</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <div id="Jcomment"></div>
+        { SITE.pv?
+          <div class="flex align-middle justify-center mt-4">
+              <span id="busuanzi_container_site_pv">
+                @{SITE.author} PV
+                <span id="busuanzi_value_site_pv"></span>
+              </span>
+          </div>
+          :''
+        }
+
+      </div>
+      <div id="grid-right" class="grid-sidebar">
+        { toc?<Toc headings={headings} />:''}
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>
