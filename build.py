@@ -16,7 +16,7 @@ def fetch_ci_time(filePath):
 
 if __name__ == "__main__":
   readmefile=open('README.md','w')
-  readmefile.write("# "+CONFIG["title"] +"\n\n>"+"查看[Deploy](https://github.com/"+CONFIG["repo"]+"/blob/master/Deploy.md)文档自行部署\n\n")
+  readmefile.write("# "+CONFIG["title"] +"\n\n>"+"查看[Deploy](https://github.com/"+CONFIG["repo"]+"/blob/main/Deploy.md)文档自行部署\n\n")
   recentfile=open('RECENT.md','w')
 
   for root, dirs, filenames in os.walk('./src/pages/posts'):
